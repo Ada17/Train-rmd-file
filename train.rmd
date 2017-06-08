@@ -41,7 +41,7 @@ C. We used the data to fit in several models which include:
 library(tidyr)
 library(lubridate)
 
-train_data <- read.csv("C:/Users/aalutu/Desktop/work/pers/data science/on-time-performance/trainsample_otp.csv")
+train_data <- read.csv("C:/Users/Adaokwy/Desktop/Ada/school/trainsample_otp.csv")
 train_data$datets <- as.POSIXct(train_data$timeStamp, format = "%m/%d/%Y %H:%M")
 head(train_data$datets)
 train_data$wkday <-weekdays(as.Date(train_data$date, format = "%m/%d/%Y"))
@@ -131,7 +131,7 @@ train_data$monthday <- as.numeric(train_data$monthday)
 ##linear model of each graph
 library(broom)
 
-summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_data))
+glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_data)))
 
 ```
 
@@ -140,7 +140,7 @@ summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_data))
 
 ```{r}
 
-summary(lm(log(as.numeric( train_data$status)+1) ~ origin + wkday, data = train_data))
+glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin + wkday, data = train_data)))
 
 ```
 ```{r}
@@ -160,7 +160,7 @@ glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin + hour + wkday 
 
 
 ```{r}
-summary(lm(log(as.numeric( train_data$status)+1) ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data))
+glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data)))
 
 ```
 
@@ -176,7 +176,7 @@ glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin+ hour + minute 
 #Add the CART model. Staus is the output or dependent variable since we need to know if it's on time (0 observation) or late (1 in the observations). Used a classification method since the status variable is binary.
 ```{r}
 
-#convert the dependent or output variable "status" observations to either 0 or 1 so the
+#convert the dependent or output variable "status" observations to either 0 or 1 so #the
 #classification CART method can be used.
 
 
@@ -205,7 +205,9 @@ TraindataTree = rpart(status ~ origin+ hour + minute + month + train_data$next_s
 
 #plot the tree
 
-prp(TraindataTree)
+#prp(TraindataTree)
+
+
 
 ```
 
@@ -214,9 +216,9 @@ prp(TraindataTree)
 
 ```{r}
 ##predict 
-#predictstatusCART = predict(TraindataTree, newdata = Testset, type = "class")
+predictstatusCART = predict(TraindataTree, Testset)
 
-#table(Testset$status, predictstatusCART)
+table(Testset$status, predictstatusCART)
 
 ```
 
