@@ -120,7 +120,7 @@ train_data2 <- within(train_data2,
                                                               decreasing = TRUE))))
 trainstat_graph <- ggplot(train_data2, aes(x = train_data2$status)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))
+   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 10))
 
 trainstat_graph
 
@@ -135,7 +135,7 @@ train_data2 <- within(train_data2,
                                                               decreasing = TRUE))))
 trainorig_graph <- ggplot(train_data2, aes(x = train_data2$origin)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))
+   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 5))
 
 trainorig_graph
 
@@ -150,7 +150,7 @@ train_data2 <- within(train_data2,
                                                               decreasing = TRUE))))
 trainnext_graph <- ggplot(train_data2, aes(x = train_data2$next_station)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))
+   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 5))
 
 trainnext_graph
 
@@ -174,7 +174,7 @@ trainmonth_graph
 ```{r}
 train_data2 <- within(train_data2,
                       train_data2$wkday <- factor(train_data2$wkday,
-                                         levels = names(sort(table(train_data2$wkday),
+                                         levels = names(sort(table(factor(train_data2$wkday)),
                                                               decreasing = TRUE))))
 trainwkday_graph <- ggplot(train_data2, aes(x = train_data2$wkday)) +
   geom_bar() +
@@ -193,7 +193,7 @@ train_data2 <- within(train_data2,
                                                               decreasing = TRUE))))
 trainid_graph <- ggplot(train_data2, aes(x = train_data2$train_id)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ coord_cartesian(xlim = c(0, 50))
 
 trainid_graph
 
@@ -229,28 +229,6 @@ library(broom)
 glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_data)))
 
 ```
-
-
-#Origin + weekday
-
-```{r}
-
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin + wkday, data = train_data)))
-
-```
-```{r}
-
-```
-#Status with the independent variables - Origin + hour+ monthday + wkday
-
-```{r}
-
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin + hour, data = train_data)))
-
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin + hour + wkday + monthday, data = train_data)))
-
-```
-
 
 
 
@@ -355,4 +333,50 @@ predROcurve = prediction(predictROC[,2], Testset$status)
 perf = performance(predROcurve, "tpr", "fpr")
 plot(perf)
 ```
+
+
+#DataTree with regression module
+```{r}
+#create a new dataframe with only relevant variables that impact the data.
+#head(train_data)
+train_data_regr <- train_data2[,c("status", "origin", "hour", "minute", "month", "next_station")]
+#head(train_data_regr)
+
+
+#train_data_regr$status <- as.numeric(train_data_new$status)
+
+head(train_data_regr$status)
+
+library(caTools)
+set.seed(3000)
+
+#create split
+#create split
+split = sample.split(train_data_regr$status, SplitRatio = 0.8)
+
+#create training and test set using the subset function
+
+Trainregset = subset(train_data_regr, split == TRUE)
+Testregset = subset(train_data_regr, split == FALSE)
+
+#built CART model
+
+library(rpart)
+library(rpart.plot)
+
+#now create the CART model. Use rpart to build a classification tree
+#use rpart formula to fit the data.
+TraindataregrTree = rpart(status ~ origin+ hour + minute + month + next_station, method = "anova", data = Trainregset)
+
+
+printcp(TraindataregrTree)
+plotcp(TraindataregrTree)
+summary(TraindataregrTree)
+rsq.rpart(TraindataregrTree)
+##plot the tree
+
+prp(TraindataregrTree)
+
+```
+
 
