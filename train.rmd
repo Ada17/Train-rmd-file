@@ -111,16 +111,14 @@ head(train_data)
 library("ggplot2")
 #set bar levels in descending order
 
-train_data2 <- train_data
-head(train_data2)
-
-train_data2 <- within(train_data2,
-                      train_data2$status <- factor(train_data2$status,
-                                         levels = names(sort(table(train_data2$status),
+train_var <- train_data$status
+train_data2 <- within(train_data,
+                      train_var <- factor(train_var,
+                                         levels = names(sort(table(train_var),
                                                               decreasing = TRUE))))
-trainstat_graph <- ggplot(train_data2, aes(x = train_data2$status)) +
+trainstat_graph <- ggplot(train_data2, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 10))
+   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(1, 30)) + scale_x_discrete(name = "Status in minutes")
 
 trainstat_graph
 
@@ -129,13 +127,15 @@ trainstat_graph
 
 #Origin variable bar chart
 ```{r}
-train_data2 <- within(train_data2,
-                      train_data2$origin <- factor(train_data2$origin,
-                                         levels = names(sort(table(train_data2$origin),
-                                                              decreasing = TRUE))))
-trainorig_graph <- ggplot(train_data2, aes(x = train_data2$origin)) +
+
+train_var <- train_data2$origin
+train_data3 <- within(train_data,
+                      train_var <- factor(train_var, ordered = TRUE))
+
+trainorig_graph <- ggplot(train_data3, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 5))
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ coord_cartesian(xlim = c(0, 50))+ scale_x_discrete(name = "Origin")
+
 
 trainorig_graph
 
@@ -144,13 +144,11 @@ trainorig_graph
 #Next Station variable bar chart
 ```{r}
 
-train_data2 <- within(train_data2,
-                      train_data2$next_station <- factor(train_data2$next_station,
-                                         levels = names(sort(table(train_data2$next_station),
-                                                              decreasing = TRUE))))
-trainnext_graph <- ggplot(train_data2, aes(x = train_data2$next_station)) +
+train_var <- train_data$next_station
+
+trainnext_graph <- ggplot(train_data3, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 5))
+   theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 25))+ scale_x_discrete(name = "Next_station")
 
 trainnext_graph
 
@@ -158,13 +156,18 @@ trainnext_graph
 
 #Month bar chart - one of the new variables created from splitting timestamp
 ```{r}
-train_data2 <- within(train_data2,
-                      train_data2$month <- factor(train_data2$month,
-                                         levels = names(sort(table(train_data2$month),
-                                                              decreasing = TRUE))))
-trainmonth_graph <- ggplot(train_data2, aes(x = train_data2$month)) +
+
+
+train_var <- train_data$month
+
+
+train_data2 <- within(train_data,
+                      train_var <- factor(train_var,
+                                         levels = names(sort(table(train_var),
+                                                              decreasing = TRUE)), ordered = TRUE))
+trainmonth_graph <- ggplot(train_data2, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Numeric Month")
 
 trainmonth_graph
 
@@ -172,11 +175,12 @@ trainmonth_graph
 
 #Weekday chart, another new variable
 ```{r}
-train_data2 <- within(train_data2,
-                      train_data2$wkday <- factor(train_data2$wkday,
-                                         levels = names(sort(table(factor(train_data2$wkday)),
-                                                              decreasing = TRUE))))
-trainwkday_graph <- ggplot(train_data2, aes(x = train_data2$wkday)) +
+train_data2 <- within(train_data,
+                      train_data$wkday <- factor(train_data$wkday,
+                                         levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), ordered = TRUE))
+
+
+trainwkday_graph <- ggplot(train_data2, aes(x = train_data$wkday)) +
   geom_bar() +
    theme(axis.text.x = element_text(angle=90, hjust=1))
 
@@ -186,17 +190,20 @@ trainwkday_graph
 
 
 ```{r}
+train_var <- train_data$train_id
 
-train_data2 <- within(train_data2,
-                      train_data2$train_id <- factor(train_data2$train_id,
-                                         levels = names(sort(table(train_data2$train_id),
-                                                              decreasing = TRUE))))
-trainid_graph <- ggplot(train_data2, aes(x = train_data2$train_id)) +
+trainid_graph <- ggplot(train_data2, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))+ coord_cartesian(xlim = c(0, 50))
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Train_Id") + theme( axis.text.x=element_blank())
 
 trainid_graph
 
+
+trainid_graph2 <- ggplot(train_data[1:100,], aes(x = train_data$train_id[1:100])) +
+  geom_bar() +
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Train_Id")
+
+trainid_graph2
 ```
 
 
@@ -233,7 +240,9 @@ glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_d
 
 
 ```{r}
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data)))
+
+logvar <- log(as.numeric( train_data$status)+1)
+glance(summary(lm(logvar ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data)))
 
 ```
 #A regression model of all variables. The chart after this is an improved model and the final version.
@@ -252,37 +261,33 @@ The original variable count was 11, the addition of the new variables increased 
 ```{r}
 #Use glance() to print only the statistics and not both statistics and train_data summary
 
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + train_data$next_station + train_data$direction, data = train_data)))
+
+
+glance(summary(lm(logvar ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + train_data$next_station + train_data$direction, data = train_data)))
 
 ```
 
-#Add the CART model. Staus is the output or dependent variable since we need to know if it's on time (0 observation) or late (1 in the observations). Used a classification method since the status variable is binary.
+#Add the CART model. The two options considered are Classification and Regression CART models/trees but the reression model is preferred so that the results can be compared with the linear regression model used above. 
+#I found this site very helpful because they explained in detail the conditions for the variables before a succesful model can be achieved - https://rstudio-pubs-static.s3.amazonaws.com/27179_e64f0de316fc4f169d6ca300f18ee2aa.html. 
+Prior to finding this site, only the root or just one circle with a number (4.6) was drawn.
 ```{r}
-#create a new dataframe with only relevant variables that impact the data.
-#head(train_data)
-train_data_new <- train_data2[,c("status", "origin", "hour", "minute", "month", "next_station")]
-head(train_data_new)
-#na.omit(train_data_new)
-#convert the dependent or output variable "status" observations to either 0 or 1 so the
-#classification CART method can be used.
-
-train_data_new$status <- replace(train_data_new$status, train_data_new$status > 0, 1)
-train_data_new$status <- as.numeric(train_data_new$status)
-
-#head(train_data_new$status)
-#head(train_data_new)
 
 library(caTools)
 set.seed(3000)
 
+
+#convert train_data$status to numeric
+train_data$status = factor(train_data$status)
+train_data$status = as.numeric(train_data$status)
+
 #create split
 #create split
-split = sample.split(train_data_new$status, SplitRatio = 0.8)
+split = sample.split(train_data$status, SplitRatio = 0.8)
 
 #create training and test set using the subset function
 
-Trainset = subset(train_data_new, split == TRUE)
-Testset = subset(train_data_new, split == FALSE)
+Trainset = subset(train_data, split == TRUE)
+Testset = subset(train_data, split == FALSE)
 
 #built CART model
 
@@ -290,93 +295,26 @@ library(rpart)
 library(rpart.plot)
 
 #now create the CART model. Use rpart to build a classification tree
+class(Trainset$monthday13)
 #use rpart formula to fit the data.
-TraindataTree = rpart(status ~ origin+ hour + minute + month + next_station, data = Trainset, method = "class", control = rpart.control(minbucket = 25))
+TraindataTree2 = rpart(Trainset$status ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data = Trainset)
+
+prp(TraindataTree2)
+summary(TraindataTree2)
+#rsq.rpart(TraindataTree2)
+rsq.rpart
+
+TraindataTree = rpart(Trainset$status ~ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31, data = Trainset)
 
 ##plot the tree
 
-#prp(TraindataTree)
+prp(TraindataTree)
+summary(TraindataTree)$r.squared
+rsq.rpart(TraindataTree)
+
 
 #fitvarUsed <- names(Testset[,1:6])
 #preds <- predict(TraindataTree, data = newdata[,c(fitvarUsed)], type = c("prob"))
 
 #how to plot result and see summary?
 ```
-
-
-#to see how the CART model will predict the TEST subset (20% of the data).
-
-```{r}
-
-
-##predict, added type = "class" for the table formula below to actually print the predictions which will be used to determine the accuracy of the model 
-predictstatusCART = predict(TraindataTree, newdata = Testset, type = "class")
-#na.omit(predictstatusCART)
-#this won't work if type = "class" is not added in the predictstatusCART above
-#needed to compute the accuracy with a threshold of 0.5
-table(Testset$status, predictstatusCART)
-#table(Testset$status, preds)
-
-```
-
-#The accuracy of the model based on the result from the table is (4593 + 71)/(4593+7517+900+24362) = 
-29225/37642 = 0.7763933
-
-#Need to compare this result with a baseline model?
-
-Plot the ROC curve
-```{r}
-library(ROCR)
-predictROC = predict(TraindataTree, newdata = Testset)
-head(predictROC)
-predROcurve = prediction(predictROC[,2], Testset$status)
-perf = performance(predROcurve, "tpr", "fpr")
-plot(perf)
-```
-
-
-#DataTree with regression module
-```{r}
-#create a new dataframe with only relevant variables that impact the data.
-#head(train_data)
-train_data_regr <- train_data2[,c("status", "origin", "hour", "minute", "month", "next_station")]
-#head(train_data_regr)
-
-
-#train_data_regr$status <- as.numeric(train_data_new$status)
-
-head(train_data_regr$status)
-
-library(caTools)
-set.seed(3000)
-
-#create split
-#create split
-split = sample.split(train_data_regr$status, SplitRatio = 0.8)
-
-#create training and test set using the subset function
-
-Trainregset = subset(train_data_regr, split == TRUE)
-Testregset = subset(train_data_regr, split == FALSE)
-
-#built CART model
-
-library(rpart)
-library(rpart.plot)
-
-#now create the CART model. Use rpart to build a classification tree
-#use rpart formula to fit the data.
-TraindataregrTree = rpart(status ~ origin+ hour + minute + month + next_station, method = "anova", data = Trainregset)
-
-
-printcp(TraindataregrTree)
-plotcp(TraindataregrTree)
-summary(TraindataregrTree)
-rsq.rpart(TraindataregrTree)
-##plot the tree
-
-prp(TraindataregrTree)
-
-```
-
-
