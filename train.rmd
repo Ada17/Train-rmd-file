@@ -105,6 +105,7 @@ head(train_data)
 ###GGplot graphs used initally to see trends and relationships within the datasets.
 
 ##Status - the dependent variable bar chart.It shows the frequency of the delays experienced by passengers at the train station when the train is late.
+
 ##From the chart, we can tell that the trains are on time ~50% of the time and late 50% of the time. In this project, we want to predict when to expect the train to be late and when it will be early to avoid waste of time when possible.
 
 ```{r}
@@ -174,7 +175,7 @@ trainmonth_graph
 
 ```
 
-#Weekday chart, another new variable
+### The Weekday chart shows the number of trains that run different days of the week. More trains run during the week and fewer trains on the weekends. The busiest day is Thursday.
 ```{r}
 train_data2 <- within(train_data,
                       train_data$wkday <- factor(train_data$wkday,
@@ -189,7 +190,7 @@ trainwkday_graph
 
 ```
 
-
+### This is a chart of all the train ids in descending order. These are all the trains that ran withing the period of a year from our dataset.
 ```{r}
 train_var <- train_data$train_id
 
@@ -199,30 +200,23 @@ trainid_graph <- ggplot(train_data2, aes(x = train_var)) +
 
 trainid_graph
 
-
-trainid_graph2 <- ggplot(train_data[1:100,], aes(x = train_data$train_id[1:100])) +
-  geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Train_Id")
-
-trainid_graph2
 ```
 
 
-#Add the weekday and monthday variables as columns to train_data dataframe.A matrix was needed to get this achieved. In this case, the matrix translated the values of the new columns to "0" and "1"."1" was printed when the new columns occured and "0" for the remaining records. for example, the new column "wkday1" represents "Monday". The value "1" in that column represents the train rides that happened on Mondays.
+
+###Convert the weekday and monthday observations to columns. The purpose is to increase the number of variables that contribute to the status (delay and on time arrivals) of the train.
+
+### To achieve this, a matrix was used. In this case, the matrix translated the values of the new columns to "0" and "1"."1" was printed when the train travelled in the specified day or month. "0" was used to fill the rest of the observations that the train did not ride during the week day or day of the month. for example, the new column "wkday1" represents "Monday". The value "1" in that column represents the train rides that happened on Mondays.
 ```{r}
 #Added contrasts to print all travel days and all days of the months otherwise some are skipped.
 
 train_data <- cbind(train_data, as.data.frame(model.matrix(~ wkday + monthday, data = train_data, contrasts.arg = list(wkday = contr.treatment(n = 7, contrasts = FALSE), monthday = contr.treatment(n = 31, contrasts = FALSE)))))
 
 
-head(train_data)
-##cbind for only train_data and converting wkday to variable
-#train_data <- cbind(train_data, as.data.frame(model.matrix( ~ wkday, data = train_data)))
 #head(train_data)
-#summary(train_data)
 ```
 
-#Linear model statistical summary for Status based on x = origin:
+#Linear model statistical summary for Status based on the independent variable x = origin. The linear regression model is one of the models implemented in this project in efforts to predict the delays of the train.
 
 ```{r}
 
@@ -239,14 +233,14 @@ glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_d
 ```
 
 
-
+### Added more variables to see the effect on the status of the train, which is the variable we are trying to predict.
 ```{r}
 
 logvar <- log(as.numeric( train_data$status)+1)
 glance(summary(lm(logvar ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data)))
 
 ```
-#A regression model of all variables. The chart after this is an improved model and the final version.
+###A regression model of all the 45 variables. The chart after this is an improved model and the final version.
 
 ```{r}
 
@@ -256,9 +250,9 @@ glance(summary(lm(as.numeric( train_data$status) ~ origin+ hour + minute + month
 ```
 
 
-#Next is the linear model chat which was used to get better statistics. To achieve a much better R-value > 24%, all significant independent variables were added including the new ones created by the matrix that were converted from observations to variables.
+###Next is the linear model chat which was used to get better statistics. To achieve a much better R-value > 24%, all significant independent variables were added including the new ones created by the matrix that were converted from observations to variables.
 
-The original variable count was 11, the addition of the new variables increased the variable count to 58.The improvement of the variables definitely contributed to a better statistics which increased from .06% to 24%.
+###The original variable count was 11, the addition of the new variables increased the variable count to 58.The improvement of the variables definitely contributed to a better statistics which increased from .06% to 24%.
 ```{r}
 #Use glance() to print only the statistics and not both statistics and train_data summary
 
@@ -268,9 +262,10 @@ glance(summary(lm(logvar ~ origin+ hour + minute + month + wkday1 + wkday2 + wkd
 
 ```
 
-#Add the CART model. The two options considered are Classification and Regression CART models/trees but the reression model is preferred so that the results can be compared with the linear regression model used above. 
-#I found this site very helpful because they explained in detail the conditions for the variables before a succesful model can be achieved - https://rstudio-pubs-static.s3.amazonaws.com/27179_e64f0de316fc4f169d6ca300f18ee2aa.html. 
-Prior to finding this site, only the root or just one circle with a number (4.6) was drawn.
+### In this section, the CART model is implemented. The two options considered are Classification and Regression CART models/trees but the reression model is preferred so that the results can be compared with the linear regression model used above. It's like comparing apples to apples or oranges to oranges.
+
+###I found this site very helpful because they explained in detail the conditions for the variables before a succesful model can be achieved - https://rstudio-pubs-static.s3.amazonaws.com/27179_e64f0de316fc4f169d6ca300f18ee2aa.html. 
+####Prior to finding this site, only the root or just one circle with a number (4.6) was drawn.
 ```{r}
 
 library(caTools)
@@ -300,8 +295,8 @@ class(Trainset$monthday13)
 #use rpart formula to fit the data.
 TraindataTree2 = rpart(Trainset$status ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data = Trainset)
 
-prp(TraindataTree2)
-summary(TraindataTree2)
+#prp(TraindataTree2)
+#summary(TraindataTree2)
 rsq.rpart(TraindataTree2)
 rsq.rpart
 
@@ -311,8 +306,8 @@ TraindataTree = rpart(Trainset$status ~ hour + minute + month + wkday1 + wkday2 
 
 ##plot the tree
 
-prp(TraindataTree)
-summary(TraindataTree)$r.squared
+#prp(TraindataTree)
+#summary(TraindataTree)$r.squared
 
 rsq.rpart(TraindataTree)
 
@@ -336,7 +331,7 @@ R2
 ```
 
 
-###Random Forest
+###Random Forest model implementation. This is the fourth model used in this project to try to come up with a reasonable prediction for the time delay prediction for the train dataset. The result at the end is similar to the Linear regression Cart model.
 ```{r}
 
 ### Random Forest Model # set the seed to make your partition reproducible 
@@ -355,7 +350,7 @@ train_1 <- train_data[ inTraining,]
 test_1 <- train_data[-inTraining,] 
  
  # fit the randomforest model 
-model <- train(tatus ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data=train_1, method="rf", metric="RMSE", tuneGrid=expand.grid(.mtry=3), ntree=250, importance=TRUE) 
+model <- train(status ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data=train_1, method="rf", metric="RMSE", tuneGrid=expand.grid(.mtry=3), ntree=4, importance=TRUE) 
 
 # what are the important variables (via permutation) 
 vi <- varImp(model, type=1) 
@@ -365,7 +360,8 @@ predicted_tr <- predict(model, newdata=train_1, select = -c(status))
 actual_tr <- train_1$status 
 rsq_tr <- 1-sum((actual_tr-predicted_tr)^2)/sum((actual_tr-mean(actual_tr))^2) 
 # predict the outcome of the testing data 
-predicted <- predict(model, newdata=test_1, select = -c(status)) actual <- test_1$status 
+predicted <- predict(model, newdata=test_1, select = -c(status)) 
+actual <- test_1$status 
 
 rsqd <- 1-sum((actual-predicted)^2)/sum((actual-mean(actual))^2)
 
