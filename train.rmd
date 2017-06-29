@@ -102,9 +102,10 @@ head(train_data)
 
 ```
 
-#GGplot graphs used initally to see trends and relationships within the datasets.
+###GGplot graphs used initally to see trends and relationships within the datasets.
 
-#Status - the dependent variable bar chart.It shows the frequency of the delays experienced by passengers at the train station when the train is late.
+##Status - the dependent variable bar chart.It shows the frequency of the delays experienced by passengers at the train station when the train is late.
+##From the chart, we can tell that the trains are on time ~50% of the time and late 50% of the time. In this project, we want to predict when to expect the train to be late and when it will be early to avoid waste of time when possible.
 
 ```{r}
 
@@ -301,8 +302,10 @@ TraindataTree2 = rpart(Trainset$status ~ origin+ hour + minute + month + wkday1 
 
 prp(TraindataTree2)
 summary(TraindataTree2)
-#rsq.rpart(TraindataTree2)
+rsq.rpart(TraindataTree2)
 rsq.rpart
+
+#train_data_regr <- train_data2[,c("status", "origin", "hour", "minute", "month", #"next_station")]
 
 TraindataTree = rpart(Trainset$status ~ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31, data = Trainset)
 
@@ -310,11 +313,63 @@ TraindataTree = rpart(Trainset$status ~ hour + minute + month + wkday1 + wkday2 
 
 prp(TraindataTree)
 summary(TraindataTree)$r.squared
-rsq.rpart(TraindataTree)
 
+rsq.rpart(TraindataTree)
 
 #fitvarUsed <- names(Testset[,1:6])
 #preds <- predict(TraindataTree, data = newdata[,c(fitvarUsed)], type = c("prob"))
+drpstat <- c("status")
+actual <- Trainset$status
+fitvarUsed <- !(names(Testset) %in% drpstat)
+preds <- predict(TraindataTree2, data = newdata[,c(fitvarUsed)])
+
+
+#preds <- predict(TraindataTree2, newdata=Testset[,fitvarUsed], type = c("prob"))
+
 
 #how to plot result and see summary?
+sum((actual-preds)^2)
+
+R2 <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
+R2
+
 ```
+
+
+###Random Forest
+```{r}
+
+### Random Forest Model # set the seed to make your partition reproducible 
+set.seed(123) 
+## features for model 
+#splitlistings <- train_data[c("log_price", "neighbourhood_cleansed", "room_type", "accommodates", #"host_listings_count", "minimum_nights", "bathrooms", "number_of_reviews", #"review_scores_rating", "cancellation_policy")] 
+
+splitlistings <- train_data[c("status", "origin", "hour", "minute", "month", "wkday1", "wkday2","wkday3", "wkday4", "wkday5", "wkday6", "wkday7", "monthday1", "monthday2", "monthday3", "monthday4", "monthday5", "monthday6", "monthday7", "monthday8", "monthday9", "monthday10", "monthday11", "monthday12", "monthday13", "monthday14", "monthday15", "monthday16", "monthday17", "monthday18", "monthday19", "monthday20", "monthday21", "monthday22", "monthday23", "monthday24", "monthday25", "monthday26", "monthday27", "monthday28", "monthday29", "monthday30", "monthday31", "next_station")]
+
+library(caret)
+library(randomForest)
+
+inTraining <- createDataPartition(splitlistings$status, p = .8, list = FALSE) 
+# save the training and testing sets as data frames 
+train_1 <- train_data[ inTraining,] 
+test_1 <- train_data[-inTraining,] 
+ 
+ # fit the randomforest model 
+model <- train(tatus ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data=train_1, method="rf", metric="RMSE", tuneGrid=expand.grid(.mtry=3), ntree=250, importance=TRUE) 
+
+# what are the important variables (via permutation) 
+vi <- varImp(model, type=1) 
+plot(vi, top=10) 
+# predict the outcome of the training data 
+predicted_tr <- predict(model, newdata=train_1, select = -c(status)) 
+actual_tr <- train_1$status 
+rsq_tr <- 1-sum((actual_tr-predicted_tr)^2)/sum((actual_tr-mean(actual_tr))^2) 
+# predict the outcome of the testing data 
+predicted <- predict(model, newdata=test_1, select = -c(status)) actual <- test_1$status 
+
+rsqd <- 1-sum((actual-predicted)^2)/sum((actual-mean(actual))^2)
+
+rsqd
+
+```
+
