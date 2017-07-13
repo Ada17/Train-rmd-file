@@ -155,7 +155,7 @@ trainorig_graph
 
 train_var <- train_data$next_station
 
-trainnext_graph <- ggplot(train_data3, aes(x = train_var)) +
+trainnext_graph <- ggplot(train_data, aes(x = train_var)) +
   geom_bar() +
    theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 25))+ scale_x_discrete(name = "Next_station")
 
@@ -345,168 +345,92 @@ R2
 ```
 
 
-###Further test to check the performance with 5%, 10%, 30%, 50%, 70%, 80% and all variables at 100% using the Training dataset.
-```{r}
+###Further test to check the performance of the Training and Test variables. The Trainset data will be trained and performance measured at 5%, 10%, 30%, 50%, 70%, 80% of the observations. A for loop is used to accomplish this in the code.
 
-
-TraindataTree2p = rpart(log(Trainset$status +1) ~ origin+ hour, data = Trainset)
-
-preds <- predict(TraindataTree2p, data = Testset[,fitvarUsed])
-
-R2p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R2p
-
-TraindataTree10p = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month, data = Trainset)
-
-preds <- predict(TraindataTree10p, data = Testset[,fitvarUsed])
-
-R10p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R10p
-
-
-
-TraindataTree30p = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7, data = Trainset)
-
-preds <- predict(TraindataTree30p, data = Testset[,fitvarUsed])
-
-R30p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R30p
-
-TraindataTree50p = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11, data = Trainset)
-
-
-preds <- predict(TraindataTree50p, data = Testset[,fitvarUsed])
-
-R50p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R50p
-
-
-TraindataTree70p = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18, data = Trainset)
-
-
-preds <- predict(TraindataTree70p, data = Testset[,fitvarUsed])
-
-R70p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R70p
-
-
-TraindataTree80p = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25, data = Trainset)
-
-
-preds <- predict(TraindataTree80p, data = Testset[,fitvarUsed])
-
-R80p <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
-
-R80p
-
-```
-
-###check performance with Testset data
+####The result from the plot shows that the Training set performed better than the Testset. The Training set started leveling around 15% of the data used. So no need to use the rest of the data since they don't add more value or improve the performance.
+#### The test data on the other hand started leveling at around 10% and the numbers are on the negative side. So only the first 5% contributes to the performance of the Test set.
 ```{r}
 
 actualtst <- log(Testset$status + 1)
 
-TestsetTree2p = rpart(log(Testset$status +1) ~ origin+ hour, data = Testset)
+j <- .05 * 3000
+#j
+R80trn <- 0
+R80tst <- 0
+for(i in 1:j){
+    if(j >=3000){
+      #get out of loop once all data has been processed
+      break
+    }
+TraindataTreePerf = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25, data = Trainset[complete.cases(i),])
 
-preds <- predict(TestsetTree2p, data = Testset[,fitvarUsed])
+#added complete.cases to remove NAs
 
-R2pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
+predstrn <- predict(TraindataTreePerf, data = Trainset[1:j,fitvarUsed])
 
-R2pt
+predstest <- predict(TraindataTreePerf, data = Testset[1:j,fitvarUsed])
 
-TestsetTree10p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month, data = Testset)
+R80trn <- c(R80trn, (1 - (sum((actual-predstrn )^2)/sum((actual-mean(actual))^2))))
 
-preds <- predict(TestsetTree10p, data = Testset[,fitvarUsed])
+R80tst <- c(R80tst, (1 - (sum((actualtst - predstest )^2)/sum((actualtst-mean(actual))^2))))
 
-R10pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
+j <- j+j
 
-R10pt
+}
 
+plot(R80trn)
+plot(R80tst)
+plot(R80trn, col="red")
+par(new=TRUE)
+plot(R80tst, col="green")
 
-
-TestsetTree30p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7, data = Testset)
-
-preds <- predict(TestsetTree30p, data = Testset[,fitvarUsed])
-
-R30pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
-
-R30pt
-
-TestsetTree50p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11, data = Testset)
-
-
-preds <- predict(TestsetTree50p, data = Testset[,fitvarUsed])
-
-R50pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
-
-R50pt
+```
 
 
-TestsetTree70p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18, data = Testset)
-
-
-preds <- predict(TestsetTree70p, data = Testset[,fitvarUsed])
-
-R70pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
-
-R70pt
-
-
-TestsetTree80p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25, data = Testset)
-
-
-preds <- predict(TestsetTree80p, data = Testset[,fitvarUsed])
-
-R80pt <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
-
-R80pt
-
-
-TestsetTree100p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, data = Testset)
+####Testing max depth on test set. The depths start leveling around the sixth level. There is no need to increase the depth more than the sixth level.
+```{r}
+#R2ts <- numeric()
+R2ts <- 0
+for (iv in 1:10){
+  print(iv)
+TestsetTree100p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, control = list(maxdepth = iv), data = Testset)
 
 
 preds <- predict(TestsetTree100p, data = Testset[,fitvarUsed])
 
-R2t <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
+R2ts <- c(R2ts, (1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))))
 
-R2t
+#R2ts
+}
+#R2ts
 
-
+plot(R2ts)
 ```
 
-####Testing max depth on test set
-```{r}
-
-
-TestsetTree100p = rpart(log(Testset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18+ monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, control = list(maxdepth = 8), data = Testset)
-
-
-preds <- predict(TestsetTree100p, data = Testset[,fitvarUsed])
-
-R2t <- 1 - (sum((actualtst-preds )^2)/sum((actual-mean(actual))^2))
-
-R2t
-
-```
-
-####Testing max depth on training set
+####Testing max depth on training set. The result from the plot shows that the best performance is reached at max_depth = 5. There is no need to grow a tree with any depth greater than 5.
 
 ```{r}
 
+#R2trn <- numeric()
+R2trn <- 0
+for (ig in 1:10){
 
-TraindataTree2 = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, control = list(maxdepth = 10), data = Trainset)
+TraindataTree2 = rpart(log(Trainset$status +1) ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 + wkday7 + monthday1 + monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station, control = list(maxdepth = ig), data = Trainset)
 
 
-preds <- predict(TraindataTree2, data = Testset[,fitvarUsed])
+preds <- predict(TraindataTree2, data = Trainset[,fitvarUsed])
 
-R2t <- 1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))
+R2trn <- c(R2trn, (1 - (sum((actual-preds )^2)/sum((actual-mean(actual))^2))))
 
-R2t
+#R2trn
+}
+
+plot(R2trn)
+#plot both maxdepth graphs in one chart.
+plot(R2trn, col="red")
+par(new=TRUE)
+
+plot(R2ts, col = "green")
 
 ```
 
