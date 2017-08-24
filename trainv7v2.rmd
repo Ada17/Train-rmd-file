@@ -67,13 +67,13 @@ subtitle: <h1>A Peek into some new variables</h1>
  
 This section shows the summary of the SEPTA train data and the first few records using the head().
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 
 library(tidyr)
 library(lubridate)
 library(broom)
 
-library(ggplot2)
+library("ggplot2")
 
 train_data <- read.csv("train100000.csv")
 
@@ -103,31 +103,27 @@ train_data$status <- gsub(pattern="min", replacement = "", x = train_data$status
 
 train_data$status <- gsub(pattern="On Time", replacement = "0", x = train_data$status, ignore.case = TRUE)
 
-train_data$status <- log(as.numeric( train_data$status)+1)
+#train_data$status <- log(as.numeric( train_data$status)+1)
 
-train_data <- cbind(train_data, as.data.frame(model.matrix(~ wkday + monthday, data = train_data, contrasts.arg = list(wkday = contr.treatment(n = 7, contrasts = FALSE), monthday = contr.treatment(n = 31, contrasts = FALSE)))))
-train_data$monthday <- as.numeric(train_data$monthday)
 
-Data <- (train_data[c('status','origin', 'hour',  'minute', 'month' , 'wkday1' , 'wkday2' , 'wkday3' , 'wkday4' , 'wkday5' , 'wkday6' , 'wkday7' , 'monthday1' , 'monthday2' , 'monthday3' , 'monthday4' , 'monthday5' , 'monthday6' , 'monthday7' , 'monthday8' , 'monthday9' , 'monthday10' , 'monthday11' , 'monthday12' , 'monthday13' , 'monthday14', 'monthday15' , 'monthday16' , 'monthday17' , 'monthday18' , 'monthday19' , 'monthday20' , 'monthday21', 'monthday22' , 'monthday23' , 'monthday24' , 'monthday25' , 'monthday26' , 'monthday27' , 'monthday28', 'monthday29' , 'monthday30' , 'monthday31' ,  'next_station' ,  'direction')])
-#head(train_data)
-str(Data)
+
+summary(train_data)
+#str(Data)
  
 
 
 ```
 
 
-subtitle: <h1>Some Initial plots</h1>
+title: <h1>Some Initial plots</h1>
 
 GGplot graphs used initally to see trends and relationships within the datasets.
-####Status variable chart
-Status is the name of the dependent variable being predicted in this project. The bar chart shows the frequency of the delays experienced by passengers at the train station when the train is late.
 
-From the chart, we can tell that the trains are on time ~50% of the time and late 50% of the time. In this project, we want to predict when to expect the train to be late and when it will be early to avoid waste of time when possible.
+subtitle: <h1>Status variable chart</h1>
 
-```{r}
+```{r,echo=FALSE, message=FALSE}
 
-library("ggplot2")
+#library("ggplot2")
 #set bar levels in descending order
 
 train_var <- train_data$status
@@ -144,10 +140,14 @@ trainstat_graph
 
 ```
 
-####Origin variable bar chart
+Status is the name of the dependent variable being predicted in this project. The bar chart shows the frequency of the delays experienced by passengers at the train station when the train is late.
 
-This chart shows the origin which is also the station where each trip begins.
-```{r}
+From the chart, we can tell that the trains are on time ~50% of the time and late 50% of the time. In this project, we want to predict when to expect the train to be late and when it will be early to avoid waste of time when possible.
+
+
+subtitle: <h1>Origin variable bar chart</h1>
+
+```{r,echo=FALSE, message=FALSE}
 
 train_var <- train_data$origin
 
@@ -166,20 +166,21 @@ trainorig_graph
 
 ```
 
-####Next Station variable bar chart
+This chart shows the origin of each passenger's trip. This also represents the train station where the passenger's journey begings.
 
-NextStation variable represents destination for each train ride.
-```{r}
+title: <h1>Next Station variable bar chart</h1>
+
+```{r,echo=FALSE, message=FALSE}
 
 train_var <- train_data$next_station
 
-
+#summary(train_data2)
 train_data2 <- within(train_data,
                       train_var <- factor(train_var,
                                          levels = names(sort(table(train_var),
                                                               decreasing = TRUE)), ordered = TRUE))
 
-trainnext_graph <- ggplot(train_data2, aes(x = train_var)) +
+trainnext_graph <- ggplot(subset(train_data2, train_data2$next_station != "None"), aes(x = train_var)) +
   geom_bar() +
    theme(axis.text.x = element_text(angle=90, hjust=1)) + coord_cartesian(xlim = c(0, 25))+ scale_x_discrete(name = "Next_station")
 
@@ -187,31 +188,65 @@ trainnext_graph
 
 ```
 
-####Month bar chart
+NextStation variable represents the next station the train will stop.
 
-This is one of the new variables improvised by splitting up the timestamp variable.
-```{r}
+title: <h1>Month bar chart</h1>
+
+```{r,echo=FALSE, message=FALSE}
 
 
 train_var <- train_data$month
 
 
-train_data2 <- within(train_data,
-                      train_var <- factor(train_var,
-                                         levels = names(sort(table(train_var),
-                                                              decreasing = TRUE)), ordered = TRUE))
-trainmonth_graph <- ggplot(train_data2, aes(x = train_var)) +
+#train_data2 <- within(train_data,
+ #                     train_var <- factor(train_var,
+ #                                        levels = names(sort(table(train_var),
+  #                                                            decreasing = FALSE)), ordered = TRUE))
+trainmonth_graph <- ggplot(train_data, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Numeric Month")
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ 
+  scale_x_continuous(name = "Numeric Month",
+                     breaks = c(1:12),
+                     labels = factor(1:12))
+  #scale_x_discrete(name = "Numeric Month")
 
 trainmonth_graph
 
 ```
 
-#### The Weekday chart 
+This chart is used to show the month with the most train rides and the least.
 
-The weekday chart shows the number of trains that run different days of the week. More trains run during the week and fewer trains on the weekends. The busiest day is Thursday.
-```{r}
+
+This is one of the new variables improvised by splitting up the timestamp variable.The numbers on the X-axis represent the numbers of real months. The y-axis represent the total number of train rides per month. The highest number of rides occurs in May, June and October.
+
+title: <h1> Hour of the day chart </h1>
+
+```{r,echo=FALSE, message=FALSE}
+
+train_var <- as.numeric(train_data$hour)
+
+
+#train_data2 <- within(train_data,
+ #                     train_var <- factor(train_var,
+ #                                        levels = names(sort(table(train_var),
+  #                                                            decreasing = FALSE)), ordered = TRUE))
+trainhour_graph <- ggplot(train_data, aes(x = train_var)) +
+  geom_bar() +
+   theme(axis.text.x = element_text(angle=90, hjust=1))+ 
+  scale_x_continuous(name = "Rides per hour",
+                     breaks = c(0:23),
+                     labels = factor(0:23))
+  #scale_x_discrete(name = "Rides per hour")
+
+trainhour_graph
+
+```
+
+The hour of the day chart shows the time that passengers ride the most.
+
+title: <h1> The Weekday chart </h1>
+
+```{r,echo=FALSE, message=FALSE}
 train_data2 <- within(train_data,
                       train_data$wkday <- factor(train_data$wkday,
                                          levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), ordered = TRUE))
@@ -225,9 +260,11 @@ trainwkday_graph
 
 ```
 
-#### Train id
-This is a chart of all the train ids in descending order. These are all the trains that transported passengers during the period of one year in our dataset.
-```{r}
+
+The weekday chart shows the number of trains that run different days of the week. More trains run during the week and fewer trains on the weekends. The busiest day is Thursday.
+
+title:<h1> Train id</h1>
+```{r,echo=FALSE, message=FALSE}
 train_var <- train_data$train_id
 
 
@@ -238,61 +275,24 @@ train_data2 <- within(train_data,
 
 trainid_graph <- ggplot(train_data2, aes(x = train_var)) +
   geom_bar() +
-   theme(axis.text.x = element_text(angle=90, hjust=1))+ scale_x_discrete(name = "Train_Id")
+   theme(axis.text.x = element_blank())+ 
+  scale_x_discrete(name = "Train_Id")
+  
 
 trainid_graph
 
 ```
 
+This is a chart of all the train ids in descending order. These are all the trains that transported passengers during the period of one year in our dataset.
 
 subtitle: <h1>More conversion of observations into variables</h1>
 
 Convert the weekday and monthday observations to columns. The purpose is to increase the number of variables that contribute to the status (delay and on time arrivals) of the train.
 
 To achieve this, a matrix was used. In this case, the matrix translated the values of the new columns to "0" and "1"."1" was printed when the train travelled in the specified day or month. "0" was used to fill the rest of the observations that the train did not ride during the week day or day of the month. for example, the new column "wkday1" represents "Monday". The value "1" in that column represents the train rides that happened on Mondays.
-```{r}
-#Added contrasts to print all travel days and all days of the months otherwise some are skipped.
-
-```
 
 
-subtitle: <h1>Linear Regression model test</h1>
-
-Linear model statistical summary for Status based on the independent variable x = origin. The linear regression model is one of the models implemented in this project in efforts to predict the delays of the train.
-
-```{r}
-
-train_data$monthday <- as.numeric(train_data$monthday)
-
-library(broom)
-
-glance(summary(lm(log(as.numeric( train_data$status)+1) ~ origin, data = train_data)))
-
-```
-
-
- Added more variables to see the effect on the status of the train, which is the variable we are trying to predict.
-```{r}
-
-logvar <- log(as.numeric( train_data$status)+1)
-glance(summary(lm(logvar ~ origin+ hour + month + monthday + wkday1 + wkday2 + wkday3 + wkday4 + wkday5, data = train_data)))
-
-```
-
-This is the same regression model with all the 45 variables. 
-
-```{r}
-
-glance(summary(lm(status ~ ., data = train_data)))
-
-
-```
-
-
-Next is the linear model chat which was used to get better statistics. To achieve a much better R-value > 24%, all significant independent variables were added including the new ones created by the matrix that were converted from observations to variables.
-
-The original variable count was 11, the addition of the new variables increased the variable count to 58.The improvement of the variables count definitely contributed to a better statistics which increased from .06% to 24%.
-```{r}
+```{r,echo=FALSE, message=FALSE, eval=FALSE}
 #Use glance() to print only the statistics and not both statistics and train_data summary
 #the . represents all variables in dataframe e
 glance(summary(lm(status ~ ., data = train_data))) 
@@ -303,12 +303,20 @@ glance(summary(lm(status ~ ., data = train_data)))
 
 subtitle: <h1>CART Model /Decision Tree</h1>:
 
- In this section, the CART model is implemented. The two options considered are Classification and Regression CART models/trees but the reression model is preferred so that the results can be compared with the linear regression model used above. It's like comparing apples to apples or oranges to oranges.
+ In this section, the CART model is implemented. The two options considered are Classification and Regression CART models/trees but the regession model is preferred so that the results can be compared with the linear regression model used above. It's like comparing apples to apples or oranges to oranges.
 
 I found this site very helpful because they explained in detail the conditions for the variables before a succesful model can be achieved - <https://rstudio-pubs-static.s3.amazonaws.com/27179_e64f0de316fc4f169d6ca300f18ee2aa.html>. 
 
 Prior to finding this site, only the root or just one circle with a number (4.6) was drawn.
-```{r}
+```{r,echo=FALSE, message=FALSE}
+#Added contrasts to print all travel days and all days of the months otherwise some are skipped.
+train_data <- cbind(train_data, as.data.frame(model.matrix(~ wkday + monthday, data = train_data, contrasts.arg = list(wkday = contr.treatment(n = 7, contrasts = FALSE), monthday = contr.treatment(n = 31, contrasts = FALSE)))))
+train_data$monthday <- as.numeric(train_data$monthday)
+
+train_data$status <- log(as.numeric( train_data$status)+1)
+
+Data <- (train_data[c('status','origin', 'hour',  'minute', 'month' , 'wkday1' , 'wkday2' , 'wkday3' , 'wkday4' , 'wkday5' , 'wkday6' , 'wkday7' , 'monthday1' , 'monthday2' , 'monthday3' , 'monthday4' , 'monthday5' , 'monthday6' , 'monthday7' , 'monthday8' , 'monthday9' , 'monthday10' , 'monthday11' , 'monthday12' , 'monthday13' , 'monthday14', 'monthday15' , 'monthday16' , 'monthday17' , 'monthday18' , 'monthday19' , 'monthday20' , 'monthday21', 'monthday22' , 'monthday23' , 'monthday24' , 'monthday25' , 'monthday26' , 'monthday27' , 'monthday28', 'monthday29' , 'monthday30' , 'monthday31' ,  'next_station' ,  'direction')])
+
 
 library(caTools)
 set.seed(3000)
@@ -346,30 +354,25 @@ actual <- train$status
 predicted <- predict(TraindataTree2, newdata = train )
 
 R2_train <- 1 - (sum((actual-predicted )^2)/sum((actual-mean(actual))^2))
-R2_test
-R2_train
+
+print(paste("The performance/r-squared value of the Testing data ",R2_test))
+print(paste("The performance/r-squared value of the Training data ",R2_train))
 #print R2
 
 
 ```
 
-The r-squared value is .318 ~ 32%. So far, the CART linear regression model performance is slightly better because the r-squared value is .335 ~ 34%.
+title: <h1>Check Performance of CART Regression model</h1>
 
-subtitle: <h1>Check Performance of CART Regression model</h1>
-
-Further test to check the performance of the Training and Test variables. The Trainset data will be trained and performance measured at 5%, 10%, 30%, 50%, 70%, 80% of the observations. A for loop is used to accomplish this in the code.
-
-The result from the plot shows that the Training set performed better than the Testset. The Training set started leveling around 15% of the data used. So no need to use the rest of the data since they don't add more value or improve the performance.
- The test data on the other hand started leveling at around 10% and the numbers are on the negative side. So only the first 5% contributes to the performance of the Test set.
  
-#### First is a check on the Test and Training data.
-```{r}
+
+```{r,echo=FALSE, message=FALSE}
 #set.seed(2)
 
 #actualtst <- log(Testset$status + 1)
-rm (R80trn)
- rm (R80tst)
- rm(jj)
+#rm (R80trn)
+# rm (R80tst)
+# rm(jj)
 jj<-0
 j <- .01 * 150000
 k <- 0
@@ -415,32 +418,34 @@ print(b)
   ggplot(b) +
     geom_point(aes(x = factor(jj), y = R80trn, color = "red")) +
   geom_point(aes(x = factor(jj), y = R80tst, color = "green"))+ 
-      labs(title = "Performance CART (Decision Tree) model\n", x = "Data size incrementing by .01", y = "Train and Test Rsqd", color = "Legend Title\n") +
+      labs(title = "Performance CART (Decision Tree) model\n", x = "Number of Training samples", y = "R-squared values", color = "Legend Title\n") +
   scale_color_manual(labels = c("Train", "Test"), values = c("red", "green"))
-  #xlab(
-  #xlab("Train -Rsqd")+
-   # ylab("Test -Rsqd")
+  
 
 ```
 
+Further test to check the performance of the Training and Test variables. The Trainset data will be trained and performance measured at 5%, 10%, 30%, 50%, 70%, 80% of the observations. A for loop is used to accomplish this in the code.
 
-subtitle: <h1>Checking max depth on the Test set for the CART models</h1>
+The peak of the performance was reached at the fourth loop with 20,000 records. There is no need to use more than 20,000 records since more data won't add more value to the performance.
+
+
+
+title: <h1>Checking max depth on the Test set for the CART models</h1>
  
-The depths start leveling around the sixth level. There is no need to increase the depth more than the sixth level.
-Testing max depth on training set. The result from the plot shows that the best performance is reached at max_depth = 2. There is no need to grow a tree with any depth greater than 5.
-```{r}
+
+```{r,echo=FALSE, message=FALSE}
 set.seed(2)
 
 #R2ts <- numeric()
-  rm(R2ts)
-  rm(R2tn)
-  rm(jj)
+ # rm(R2ts)
+ # rm(R2tn)
+ # rm(jj)
 R2ts <- 0
 R2tn <- 0
 k <-0
 jj <-0
 
-for (iv in 1:10){
+for (iv in 1:4){
   
   #TraindataTreePerf = rpart(status ~ ., train_d)
 TestsetTree100p = rpart(status ~ ., control = list(maxdepth = iv), train_d)
@@ -461,7 +466,7 @@ R2tn[k] <- (1 - (sum((train$status-predstn )^2)/sum((train$status-mean(train$sta
 }
 #list the r-squared values at different depths
 R2ts
-plot(R2ts)
+
 
 R2tn
 
@@ -469,20 +474,22 @@ md <- data.frame(jj, R2ts, R2tn)
 print(md)
 
   ggplot(md) +
-    geom_point(aes(x = factor(jj), y = R2tn, color = "red")) +
-  geom_point(aes(x = factor(jj), y = R2ts, color = "green"))+
-      labs(title = " Maximum Depth for Training and Testing data - Decision Tree \n", x = "Maximum depth inc by 1", y = "Train and Test", color = "Legend Title\n") +
+    geom_point(aes(x = factor(jj), y = R2tn, color = "green")) +
+  geom_point(aes(x = factor(jj), y = R2ts, color = "red"))+
+      labs(title = " Decision Tree Learning curve Performance\n", x = "Maximum depth (Complexity)", y = "Train and Test", color = "Legend Title\n") +
   scale_color_manual(labels = c("Train", "Test"), values = c("red", "green"))
 
  
 ```
 
+###As the depth increases, the complexity of the model increases.
 
+The depths start leveling around the fourth level for both the Training and testing data. There is no need to increase the complexity further since it doesn't improve the performance of the data.
 
 subtitle: <h1>Random Forest model</h1>
 
 Random Forest model implementation. This is the fourth model used in this project to try to come up with a reasonable prediction for the time delay prediction for the train dataset. The result at the end is similar to the Linear regression Cart model.
-```{r}
+```{r,echo=FALSE, eval=FALSE}
  
 set.seed(123) 
 ## features for model 
@@ -524,7 +531,7 @@ subtitle: <h1>Check performance on the RandomForest Training and Testing data</h
 
 The plots show that the Training set performed better than the Test set.
 
-```{r}
+```{r,echo=FALSE, eval=FALSE}
 
 set.seed(2)
 
@@ -593,64 +600,54 @@ rsqd
 ```
 
 
-Check r-squared for Training and Test data for Regression model
-```{r}
+
+title: <h1>Linear Regression model test</h1>
+
+Linear model statistical summary for Status based on the independent variable x = origin. The linear regression model is one of the models implemented in this project  to predict the delays of the train.
+
+
+```{r,echo=FALSE, message=FALSE}
+
 set.seed(2)
 
-rm(R2lmtrn)
-rm(R2lmtst)
-rm(jj)
-x <- .01 * 150000
-#j
-R2lmtrn <- 0
-R2lmtst <- 0
-jj<-0
-k<-0
-for(b in 1:x){
-  
-    if(x >=150000){
-      #get out of loop once all data has been processed
-      break
-    }
-  
-train_lm = train[1:x,]
 
-#k=k+1
-jj[k] <- x 
 
-TraindataLM <- lm(status ~ ., data = train_lm)
+train_lm = train
+train_lm$next_station =as.numeric(train_lm$next_station )
+train_lm$direction =as.numeric(train_lm$direction )
+train_lm$origin =as.numeric(train_lm$origin )
+train_lm$hour =as.numeric(train_lm$hour )
+train_lm$minute =as.numeric(train_lm$minute )
 
-#data = Trainset[complete.cases(b),])
+test_lm = test
+test_lm$next_station =as.numeric(test_lm$next_station )
+test_lm$direction =as.numeric(test_lm$direction )
+test_lm$origin =as.numeric(test_lm$origin )
+test_lm$hour =as.numeric(test_lm$hour )
+test_lm$minute =as.numeric(test_lm$minute )
 
-predstrn <- predict(TraindataLM, data = train)
+# wkday7 + monthday1 +
+TraindataLM <- lm(status ~ origin+ hour + minute + month + wkday1 + wkday2 + wkday3 + wkday4 + wkday5 + wkday6 +  monthday2 + monthday3 + monthday4 + monthday5 + monthday6 + monthday7 + monthday8 + monthday9 + monthday10 + monthday11 + monthday12 + monthday13 + monthday14+ monthday15 + monthday16 + monthday17 + monthday18 + monthday19 + monthday20 + monthday21+ monthday22 + monthday23 + monthday24 + monthday25 + monthday26 + monthday27 + monthday28+ monthday29 + monthday30 + monthday31 + next_station + direction, data = train_lm)
 
-predstest <- predict(TraindataLM, data = test) 
 
-R2lmtrn[k] <- 1-sum((train$status-predstrn)^2)/sum((train$status-mean(train$status))^2)
 
-R2lmtst[k] <- 1-sum((test$status-predstest)^2)/sum((test$status-mean(test$status))^2)
+predstrn <- predict(TraindataLM,    newdata = train_lm )
 
-k=k+1
+predstest <- predict(TraindataLM,  newdata = test_lm) 
 
-x <- x+x
+R2lmtrn  <- 1-sum((train_lm$status-predstrn)^2)/sum((train_lm$status-mean(train_lm$status))^2)
 
-}
+R2lmtst  <- 1-sum((test_lm$status-predstest)^2)/sum((test_lm$status-mean(test_lm$status))^2)
 
-#list r-squared for Linear Regression Training and Test data
-R2lmtrn
-R2lmtst
+print(paste("The training data performance is ",R2lmtrn))
+      
+print(paste("The training data performance is ",R2lmtst))
+      
 
-md <- data.frame(jj, R2lmtrn, R2lmtst)
-print(md)
-
-  ggplot(md) +
-    geom_point(aes(x = jj, y = R2lmtrn, color = "red")) +
-  geom_point(aes(x = jj, y = R2lmtst, color = "green"))+ 
-    labs(title = "Performance \n", x = "Data size incrementing by .01", y = "Train_red and Test_green Rsqd", color = "Legend Title\n") +
-  scale_color_manual(labels = c("Train", "Test"), values = c("red", "green"))
-  
 
 ```
+
+
 
 
 
